@@ -57,50 +57,44 @@ namespace SMTP.Controllers
             return CheckMail(messageClient);
         }
 
-        public string CommandData()
+        public string CommandData(NetworkStream stream)
         {
+            string message = string.Empty;
+
             if (commands.Contains("MAIL FROM") && commands.Contains("RCPT TO"))
                 if (!commands.Contains("DATA"))
                 {
                     commands.Add("DATA");
-                    return "354 Начало записи сообщения, чтобы закончить писать <CRLF>.<CRLF>. Укажите SUBJECT, BODY, ISHTML";
+                    do
+                    {
+                        StringBuilder builder = new();
+                        byte[] data = new byte[1024];
+                        int bytes = stream.Read(data, 0, data.Length);
+                        message = builder.Append(Encoding.Unicode.GetString(data, 0, bytes)).ToString();
+                        string[] messageWords = message.Split(' ');
+                        foreach (var item in messageWords)
+                        {
+                            if (item.Contains("sub"))
+                            {
+                                string[] otvet = item.Split(':');
+                                this.message.Subject = otvet[1];
+                                message = string.Empty;
+                                break;
+                            }
+                        }
+                        if (message != ".")
+                        {
+                            if (message != string.Empty)
+                                this.message.Body += message + "\r\n";
+                            data = Encoding.Unicode.GetBytes("/");
+                            stream.Write(data, 0, data.Length);
+                        }
+                    }
+                    while (message != ".");
+                    return "250 ok";
                 }
                 else return ErrorString;
             else return "Сначала введите 'MAIL FROM' и 'RCPT TO'";
-        }
-
-        public string CommandSubject(string messageClient)
-        {
-            if (!commands.Contains("SUBJECT") && commands.Contains("DATA"))
-            {
-                commands.Add("SUBJECT");
-                string[] otvet = messageClient.Split(':');
-                message.Subject = otvet[1];
-                return "Тема успешно добавлена";
-            }
-            else return "Вы уже указали тему сообщения или забыли начать сообщение с помощью команды 'DATA'";
-        }
-
-        public string CommandBody(string messageClient)
-        {
-            if (!commands.Contains("BODY") && commands.Contains("DATA"))
-            {
-                commands.Add("BODY");
-                string[] otvet = messageClient.Split(':');
-                message.Body = otvet[1];
-                return "Текст успешно добавлен";
-            }
-            else return "Вы уже ввели свое сообщение или забыли начать сообщение с помощью команды 'DATA'";
-        }
-
-        public string CommandIsHtml()
-        {
-            if (commands.Contains("DATA") && commands.Contains("DATA") && commands.Contains("SUBJECT"))
-            {
-                options.IsBodyHTML = true;
-                return "Текст читается в HTML коде";
-            }
-            else return "Сначала введите сообщение в HTML коде";
         }
 
         public string CommandStartSsl()
@@ -136,10 +130,11 @@ namespace SMTP.Controllers
         public string CommandSend(string host, int port)
         {
             message.To = emailTO;
-            if (CheckInfo(host, port) == string.Empty)
+            var Obj = CheckInfo(host, port);
+            if (Obj == string.Empty)
                 return "250 ok. Письмо было отправлено.";
             else
-                return CheckInfo(host, port);
+                return Obj;
         }
 
         public string CommandQuit(TcpClient client)

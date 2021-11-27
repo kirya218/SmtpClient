@@ -7,7 +7,7 @@ namespace Client
     public class Program
     {
         static void Main(string[] args)
-        { 
+        {
             TcpClient client;
             Console.Write("IP для подключения: ");
             string ip = Console.ReadLine();
@@ -36,7 +36,8 @@ namespace Client
                     while (stream.DataAvailable);
 
                     message = builder.ToString();
-                    Console.WriteLine("S: " + message);
+                    if (message != "/")
+                        Console.WriteLine("S: " + message);
                 }
             }
             catch

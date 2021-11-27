@@ -10,11 +10,12 @@ namespace SMTP
 {
     public class ClientObject
     {
-        private string passsword = "hQ86vJf7K6k9e3HtEWcG";
+        //hQ86vJf7K6k9e3HtEWcG
         private TcpClient client;
         private readonly СommandСontroller сommands = new();
         private string messageS, messageC, host;
         private int port;
+        private byte[] data = new byte[1024];
 
         /// <summary>
         ///     Создает объект клиента для общения с ним
@@ -28,6 +29,35 @@ namespace SMTP
         }
 
         /// <summary>
+        ///     Получает сообщения от клиента.
+        /// </summary>
+        /// <param name="stream">Поток</param>
+        /// <returns>Возращает сообщение для сервера</returns>
+        private StringBuilder GetClientMessages(NetworkStream stream)
+        {
+            StringBuilder builder = new();
+            do
+            {
+                int bytes = stream.Read(data, 0, data.Length);
+                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+            }
+            while (stream.DataAvailable);
+            Console.WriteLine("C: " + messageC);
+
+            return builder;
+        }
+
+        /// <summary>
+        ///     Отправляет сообщение клиенту.
+        /// </summary>
+        private void SendMessageServerToClient(NetworkStream stream)
+        {
+            data = Encoding.Unicode.GetBytes(messageS);
+            stream.Write(data, 0, data.Length);
+            messageS = string.Empty;
+        }
+
+        /// <summary>
         ///     Процесс общения клиента с сервером
         /// </summary>
         public void Process()
@@ -38,36 +68,24 @@ namespace SMTP
                 stream = client.GetStream();
                 while (true)
                 {
-                    byte[] data = new byte[1024];
-                    StringBuilder builder = new();
-                    int bytes = 0;
-                    do
-                    {
-                        bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                    }
-                    while (stream.DataAvailable);
+                    messageC = GetClientMessages(stream).ToString();
 
-                    messageC = builder.ToString();
-
-                    Console.WriteLine("C: " + messageC);
                     if (messageC.StartsWith("EHLO")) messageS = сommands.CommandEhlo();
                     else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
                     else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC);
-                    else if (messageC.StartsWith("DATA")) messageS = сommands.CommandData();
+                    else if (messageC.StartsWith("DATA"))
+                    {
+                        messageS = "354 Начало записи сообщения, чтобы закончить писать <CRLF>.<CRLF>.";
+                        SendMessageServerToClient(stream);
+                        messageS = сommands.CommandData(stream);
+                    }
+                    else if (messageC == "SEND") messageS = сommands.CommandSend(host, port);
                     else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
                     else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
                     else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
-                    else if (messageC.StartsWith("SUBJECT")) messageS = сommands.CommandSubject(messageC);
-                    else if (messageC.StartsWith("BODY")) messageS = сommands.CommandBody(messageC);
-                    else if (messageC.StartsWith("ISHTML")) messageS = сommands.CommandIsHtml();
-                    else if (messageC.StartsWith("SEND")) messageS = сommands.CommandSend(host, port);
                     else if (messageC.StartsWith("QUIT")) messageS = сommands.CommandQuit(client);
                     else messageS = "500 Данной команды не существует";
-
-                    data = Encoding.Unicode.GetBytes(messageS);
-                    stream.Write(data, 0, data.Length);
-                    messageS = string.Empty;
+                    SendMessageServerToClient(stream);
                 }
             }
             catch (Exception ex)

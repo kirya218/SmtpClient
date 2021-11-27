@@ -36,27 +36,7 @@ namespace SMTP.Interfaces
         ///     Команда DATA. Начинает запись самого письма.
         /// </summary>
         /// <returns>Ответ сервера</returns>
-        string CommandData();
-
-        /// <summary>
-        ///     Команда SUBJECT. Записывает в тему письма.
-        /// </summary>
-        /// <param name="messageClient">Запрос пользователя</param>
-        /// <returns>Ответ сервера</returns>
-        string CommandSubject(string messageClient);
-
-        /// <summary>
-        ///     Команда BODY. Записывает все в тело письма.
-        /// </summary>
-        /// <param name="messageClient">Запрос пользователя</param>
-        /// <returns>Ответ сервера</returns>
-        string CommandBody(string messageClient);
-
-        /// <summary>
-        ///     Командна ISHTML. Читает текст как HTML код.
-        /// </summary>
-        /// <returns>Ответ сервера</returns>
-        string CommandIsHtml();
+        string CommandData(NetworkStream stream);
 
         /// <summary>
         ///     Команда STARTSSL, включает защищенное соединение.
