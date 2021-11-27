@@ -24,7 +24,7 @@ namespace SMTP
         public Settings()
         {
             List<string[]> text2 = new List<string[]>();
-            string[] text = File.ReadAllText(@"..\..\..\..\files\settings.txt").Split(';');
+            string[] text = File.ReadAllLines("Files/settings.txt");
             foreach (var item in text)
             {
                 text2.Add(item.Split(':'));

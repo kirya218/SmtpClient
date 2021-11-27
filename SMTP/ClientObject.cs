@@ -1,10 +1,7 @@
 ﻿using SMTP.Controllers;
-using SMTP.Models;
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SMTP
 {
@@ -35,11 +32,11 @@ namespace SMTP
         /// <returns>Возращает сообщение для сервера</returns>
         private StringBuilder GetClientMessages(NetworkStream stream)
         {
-            StringBuilder builder = new();
+            StringBuilder builder = new StringBuilder();
             do
             {
                 int bytes = stream.Read(data, 0, data.Length);
-                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                builder.Append(Encoding.UTF8.GetString(data, 0, bytes));
             }
             while (stream.DataAvailable);
             Console.WriteLine("C: " + messageC);
@@ -52,7 +49,7 @@ namespace SMTP
         /// </summary>
         private void SendMessageServerToClient(NetworkStream stream)
         {
-            data = Encoding.Unicode.GetBytes(messageS);
+            data = Encoding.UTF8.GetBytes(messageS);
             stream.Write(data, 0, data.Length);
             messageS = string.Empty;
         }
@@ -69,22 +66,22 @@ namespace SMTP
                 while (true)
                 {
                     messageC = GetClientMessages(stream).ToString();
-
-                    if (messageC.StartsWith("EHLO")) messageS = сommands.CommandEhlo();
+                    messageC = messageC.Replace("\r\n", string.Empty);
+                    if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
                     else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
                     else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC);
                     else if (messageC.StartsWith("DATA"))
                     {
-                        messageS = "354 Начало записи сообщения, чтобы закончить писать <CRLF>.<CRLF>.";
+                        messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.";
                         SendMessageServerToClient(stream);
                         messageS = сommands.CommandData(stream);
                     }
-                    else if (messageC == "SEND") messageS = сommands.CommandSend(host, port);
+                    else if (messageC.StartsWith("SEND")) messageS = сommands.CommandSend(host, port);
                     else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
                     else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
                     else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
                     else if (messageC.StartsWith("QUIT")) messageS = сommands.CommandQuit(client);
-                    else messageS = "500 Данной команды не существует";
+                    else messageS = "500 This command does not exist";
                     SendMessageServerToClient(stream);
                 }
             }

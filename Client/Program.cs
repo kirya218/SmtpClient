@@ -22,7 +22,7 @@ namespace Client
                 {
                     Console.Write("C:");
                     string message = Console.ReadLine();
-                    byte[] data = Encoding.Unicode.GetBytes(message);
+                    byte[] data = Encoding.UTF8.GetBytes(message);
                     stream.Write(data, 0, data.Length);
 
                     data = new byte[1024];
@@ -31,13 +31,12 @@ namespace Client
                     do
                     {
                         bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                        builder.Append(Encoding.UTF8.GetString(data, 0, bytes));
                     }
                     while (stream.DataAvailable);
 
                     message = builder.ToString();
-                    if (message != "/")
-                        Console.WriteLine("S: " + message);
+                    Console.WriteLine("S: " + message);
                 }
             }
             catch

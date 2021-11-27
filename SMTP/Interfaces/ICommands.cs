@@ -13,10 +13,10 @@ namespace SMTP.Interfaces
     public interface ICommands
     {
         /// <summary>
-        ///     Команда EHLO. Выводит раcширения.
+        ///     Команда HELO. Выводит раcширения.
         /// </summary>
         /// <returns>Ответ сервера</returns>
-        string CommandEhlo();
+        string CommandHelo();
 
         /// <summary>
         ///     Команда MAIL FROM. Назначает кто будет посылать письма.

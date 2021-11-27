@@ -6,4 +6,10 @@
     <StartupObject>SMTP.Server</StartupObject>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="Files\settings.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

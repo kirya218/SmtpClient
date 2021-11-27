@@ -1,12 +1,9 @@
 ﻿using SMTP.Interfaces;
 using SMTP.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SMTP.Controllers
 {
@@ -15,27 +12,27 @@ namespace SMTP.Controllers
     /// </summary>
     public class СommandСontroller : ICommands
     {
-        private ModelInfo info = new();
-        private ModelMessage message = new();
-        private ModelAuthorization authorization = new();
-        private ModelAdditionalOptions options = new();
-        private ModelCommands commandsSMTP = new();
-        private List<string> emailTO = new();
+        private ModelInfo info =  new ModelInfo();
+        private ModelMessage message = new ModelMessage();
+        private ModelAuthorization authorization = new ModelAuthorization();
+        private ModelAdditionalOptions options = new ModelAdditionalOptions();
+        private ModelCommands commandsSMTP = new ModelCommands();
+        private List<string> emailTO = new List<string>();
         /// <summary>
         ///     Ответ сервера, если пользователь уже вводил данную комнду или повторяет её.
         /// </summary>
-        private const string ErrorString = "Вы уже ввели данную команду";
+        private const string ErrorString = "You have already entered this command";
 
         /// <summary>
         ///     Список для всех команд, которые пользователь уже ввел.
         /// </summary>
         private List<string> commands = new List<string>();
 
-        public string CommandEhlo()
+        public string CommandHelo()
         {
-            if (!commands.Contains("EHLO"))
+            if (!commands.Contains("HELO"))
             {
-                commands.Add("EHLO");
+                commands.Add("HELO");
                 return "\r\n250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250-LOGIN";
             }
             else return ErrorString;
@@ -67,10 +64,10 @@ namespace SMTP.Controllers
                     commands.Add("DATA");
                     do
                     {
-                        StringBuilder builder = new();
+                        StringBuilder builder = new StringBuilder();
                         byte[] data = new byte[1024];
                         int bytes = stream.Read(data, 0, data.Length);
-                        message = builder.Append(Encoding.Unicode.GetString(data, 0, bytes)).ToString();
+                        message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
                         string[] messageWords = message.Split(' ');
                         foreach (var item in messageWords)
                         {
@@ -86,7 +83,7 @@ namespace SMTP.Controllers
                         {
                             if (message != string.Empty)
                                 this.message.Body += message + "\r\n";
-                            data = Encoding.Unicode.GetBytes("/");
+                            data = Encoding.UTF8.GetBytes(" ");
                             stream.Write(data, 0, data.Length);
                         }
                     }
@@ -94,7 +91,7 @@ namespace SMTP.Controllers
                     return "250 ok";
                 }
                 else return ErrorString;
-            else return "Сначала введите 'MAIL FROM' и 'RCPT TO'";
+            else return "First enter 'MAIL FROM' and 'RCPT TO'";
         }
 
         public string CommandStartSsl()
@@ -105,13 +102,13 @@ namespace SMTP.Controllers
                 options.EnableSSL = true;
                 return "250 ok";
             }
-            else return "Вы уже включили SSL";
+            else return "You have already enabled SSL";
         }
 
         public string CommandLogin()
         {
             if (!commands.Contains("LOGIN"))
-                return "Введите логин и пароль через <CRLF>:<CRLF>. Начиная команду с <CRLF>AUTH<CRLF>";
+                return "Enter your username and password via <CRLF>:<CRLF>. Starting the command with <CR LF>AUTH<CR LF>";
             else return ErrorString;
         }
 
@@ -122,7 +119,7 @@ namespace SMTP.Controllers
                 string[] cred = messageClient.Split(':');
                 authorization.Login = cred[1];
                 authorization.Password = cred[2];
-                return "Авторизация прошла успешно";
+                return "250 ok";
             }
             else return ErrorString;
         }
@@ -132,7 +129,7 @@ namespace SMTP.Controllers
             message.To = emailTO;
             var Obj = CheckInfo(host, port);
             if (Obj == string.Empty)
-                return "250 ok. Письмо было отправлено.";
+                return "250 ok";
             else
                 return Obj;
         }
@@ -140,7 +137,7 @@ namespace SMTP.Controllers
         public string CommandQuit(TcpClient client)
         {
             client.Close();
-            return "До встречи";
+            return "221 Close connection. See you soon";
         }
 
         /// <summary>
@@ -159,13 +156,13 @@ namespace SMTP.Controllers
                         info.Options = options;
                         info.Port = port;
                         info.Host = host;
-                        SetSettingSMTP settings = new(info);
+                        SetSettingSMTP settings = new SetSettingSMTP(info);
                     }
                 return string.Empty;
             }
             else
             {
-                messageServer = "Не все поля заполнены\r\nДанные команды не были выполнены: ";
+                messageServer = "Not all fields are filled in.\r\nThese commands were not executed: ";
                 foreach (var item in commands)
                 {
                     if (!commandsSMTP.commands.Contains(item))
@@ -194,9 +191,9 @@ namespace SMTP.Controllers
                         mail += item;
                 }
             }
-            if (mail == string.Empty) return "354 Начните ввод почты '<', закончите с '>'";
+            if (mail == string.Empty) return "354 Start typing mail '<', finish with '>'";
             else if (Regex.IsMatch(@"^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$", mail))
-                return "Некорректно введен email";
+                return "Incorrectly entered email";
             else
             {
                 if (email.StartsWith("MAIL FROM")) message.From = mail;
