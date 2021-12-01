@@ -18,6 +18,7 @@ namespace SMTP.Controllers
         private ModelAdditionalOptions options = new ModelAdditionalOptions();
         private ModelCommands commandsSMTP = new ModelCommands();
         private List<string> emailTO = new List<string>();
+        
         /// <summary>
         ///     Ответ сервера, если пользователь уже вводил данную комнду или повторяет её.
         /// </summary>
@@ -68,6 +69,7 @@ namespace SMTP.Controllers
                         byte[] data = new byte[1024];
                         int bytes = stream.Read(data, 0, data.Length);
                         message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
+                        message = message.Replace("\r\n", string.Empty);
                         string[] messageWords = message.Split(' ');
                         foreach (var item in messageWords)
                         {

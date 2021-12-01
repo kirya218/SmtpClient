@@ -55,6 +55,17 @@ namespace SMTP
         }
 
         /// <summary>
+        ///     Начало разговора с сервреом
+        /// </summary>
+        /// <param name="stream">поток данных</param>
+        private void StartServerTalk(NetworkStream stream)
+        {
+            GetClientMessages(stream);
+            messageS = "220 smtp.yamong.ru Hello\r\n";
+            SendMessageServerToClient(stream);
+        }
+
+        /// <summary>
         ///     Процесс общения клиента с сервером
         /// </summary>
         public void Process()
@@ -63,6 +74,7 @@ namespace SMTP
             try
             {
                 stream = client.GetStream();
+                StartServerTalk(stream);
                 while (true)
                 {
                     messageC = GetClientMessages(stream).ToString();
@@ -72,7 +84,7 @@ namespace SMTP
                     else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC);
                     else if (messageC.StartsWith("DATA"))
                     {
-                        messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.";
+                        messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.\r\n";
                         SendMessageServerToClient(stream);
                         messageS = сommands.CommandData(stream);
                     }
@@ -82,6 +94,7 @@ namespace SMTP
                     else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
                     else if (messageC.StartsWith("QUIT")) messageS = сommands.CommandQuit(client);
                     else messageS = "500 This command does not exist";
+                    messageS += "\r\n";
                     SendMessageServerToClient(stream);
                 }
             }
