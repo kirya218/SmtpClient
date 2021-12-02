@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace SMTP
@@ -11,12 +12,22 @@ namespace SMTP
         /// <summary>
         ///     Smtp-сервер, с которого производится отправление почты. Например, smtp.yandex.ru
         /// </summary>
-        public string host { get; set; }
+        public string Host { get; set; }
 
         /// <summary>
         ///     Порт, используемый smp-сервером.
         /// </summary>
-        public string port { get; set; }
+        public string Port { get; set; }
+
+        /// <summary>
+        ///     Открывает передачу на другие сервера.
+        /// </summary>
+        public bool Relay { get; set; }
+
+        /// <summary>
+        ///     Домен сервера.
+        /// </summary>
+        public string Domain { get; set; }
 
         /// <summary>
         ///     Собирает информацию с файла "Настройки"
@@ -29,8 +40,10 @@ namespace SMTP
             {
                 text2.Add(item.Split(':'));
             }
-            host = text2[0][1];
-            port = text2[1][1];
+            Host = text2[0][1];
+            Port = text2[1][1];
+            Relay = Convert.ToBoolean(text2[2][1]);
+            Domain = text2[3][1];
         }
     }
 }

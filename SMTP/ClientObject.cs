@@ -10,7 +10,8 @@ namespace SMTP
         //hQ86vJf7K6k9e3HtEWcG
         private TcpClient client;
         private readonly СommandСontroller сommands = new();
-        private string messageS, messageC, host;
+        private string messageS, messageC, host, domain;
+        private bool relay;
         private int port;
         private byte[] data = new byte[1024];
 
@@ -18,11 +19,13 @@ namespace SMTP
         ///     Создает объект клиента для общения с ним
         /// </summary>
         /// <param name="tcpClient">клиент</param>
-        public ClientObject(TcpClient tcpClient, int port, string host)
+        public ClientObject(TcpClient tcpClient, Settings settings)
         {
             client = tcpClient;
-            this.port = port;
-            this.host = host;
+            port = Convert.ToInt32(settings.Port);
+            host = settings.Host;
+            relay = settings.Relay;
+            domain = settings.Domain;
         }
 
         /// <summary>
@@ -81,7 +84,7 @@ namespace SMTP
                     messageC = messageC.Replace("\r\n", string.Empty);
                     if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
                     else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
-                    else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC);
+                    else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
                     else if (messageC.StartsWith("DATA"))
                     {
                         messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.\r\n";

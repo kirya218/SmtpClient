@@ -1,4 +1,5 @@
-﻿using SMTP.Interfaces;
+﻿using SMTP.Entities;
+using SMTP.Interfaces;
 using SMTP.Models;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -12,13 +13,15 @@ namespace SMTP.Controllers
     /// </summary>
     public class СommandСontroller : ICommands
     {
-        private ModelInfo info =  new ModelInfo();
+        private ModelInfo info = new ModelInfo();
         private ModelMessage message = new ModelMessage();
         private ModelAuthorization authorization = new ModelAuthorization();
         private ModelAdditionalOptions options = new ModelAdditionalOptions();
         private ModelCommands commandsSMTP = new ModelCommands();
+        private Users users = new Users();
         private List<string> emailTO = new List<string>();
-        
+        private List<string> nicknameSend = new List<string>();
+
         /// <summary>
         ///     Ответ сервера, если пользователь уже вводил данную комнду или повторяет её.
         /// </summary>
@@ -49,10 +52,37 @@ namespace SMTP.Controllers
             else return ErrorString;
         }
 
-        public string CommandRcptTo(string messageClient)
+        public string CommandRcptTo(string messageClient, string domain, bool relay)
         {
             commands.Add("RCPT TO");
-            return CheckMail(messageClient);
+            string[] email = GetClearEmail(messageClient).Split('@');
+            List<string> nicks = users.GetUsers();
+            if (relay == false)
+            {
+                if (email[1] == domain)
+                {
+                    if (!nicks.Contains(email[0])) return "This user is missing";
+                    else
+                    {
+                        nicknameSend.Add(email[0]);
+                        return "250 ok";
+                    }
+                }
+                else return "This server accepts only emails with its own domain";
+            }
+            else
+            {
+                if (email[1] == domain)
+                {
+                    if (!nicks.Contains(email[0]))
+                    {
+                        nicknameSend.Add(email[0]);
+                        return "250 ok";
+                    }
+                    else return "This user is missing";
+                }
+                else return CheckMail(messageClient);
+            }
         }
 
         public string CommandData(NetworkStream stream)
@@ -148,19 +178,30 @@ namespace SMTP.Controllers
         private string CheckInfo(string host, int port)
         {
             string messageServer = string.Empty;
-            if (message.From != string.Empty && message.To.Count != 0 && message.Body != string.Empty && message.Subject != string.Empty)
+            if (message.From != string.Empty && (message.To.Count != 0 || nicknameSend.Count != 0) && message.Body != string.Empty && message.Subject != string.Empty)
             {
                 if (authorization.Login != string.Empty && authorization.Password != string.Empty)
+                {
                     if (options.EnableSSL == true)
                     {
+                        CreateMessagesController createMessage;
+                        SetSettingSMTP settings;
                         info.Authorization = authorization;
                         info.Message = message;
                         info.Options = options;
                         info.Port = port;
                         info.Host = host;
-                        SetSettingSMTP settings = new SetSettingSMTP(info);
+                        if (message.To.Count != 0)
+                            settings = new SetSettingSMTP(info);
+                        if(nicknameSend.Count != 0)
+                            foreach(var item in nicknameSend)
+                                createMessage = new CreateMessagesController(info, item);
+
+                        return string.Empty;
                     }
-                return string.Empty;
+                    else return "245 Turn on SSL";
+                }
+                else return "245 Logn In";
             }
             else
             {
@@ -179,29 +220,40 @@ namespace SMTP.Controllers
         /// </summary>
         /// <param name="email">email</param>
         /// <returns>Возращает текстовый ответ(ошибка или все прошло успешно)</returns>
-        private string CheckMail(string email)
+        private string CheckMail(string clientMessage)
         {
-            string mail = string.Empty;
+            string email = GetClearEmail(clientMessage);
+            if (email == string.Empty) return "354 Start typing mail '<', finish with '>'";
+            else if (Regex.IsMatch(@"^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$", email))
+                return "Incorrectly entered email";
+            else
+            {
+                if (clientMessage.StartsWith("MAIL FROM")) message.From = email;
+                else if (clientMessage.StartsWith("RCPT TO")) emailTO.Add(email);
+                return "250 ok";
+            }
+        }
+
+        /// <summary>
+        ///     Очищает сообщения пользователя(email) от всех знаков кроме самой почты.
+        /// </summary>
+        /// <param name="message">Сообщение пользователя</param>
+        /// <returns>Чистый email</returns>
+        private string GetClearEmail(string message)
+        {
+            string email = string.Empty;
             bool fg = false;
-            foreach (var item in email)
+            foreach (var item in message)
             {
                 if (item == '<')
                     fg = true;
                 if (fg == true)
                 {
                     if (item != '<' && item != '>')
-                        mail += item;
+                        email += item;
                 }
             }
-            if (mail == string.Empty) return "354 Start typing mail '<', finish with '>'";
-            else if (Regex.IsMatch(@"^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$", mail))
-                return "Incorrectly entered email";
-            else
-            {
-                if (email.StartsWith("MAIL FROM")) message.From = mail;
-                else if (email.StartsWith("RCPT TO")) emailTO.Add(mail);
-                return "250 ok";
-            }
+            return email;
         }
     }
 }

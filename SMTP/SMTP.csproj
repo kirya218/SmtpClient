@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="Files\Accounts\kostya123.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Accounts\zahar0303.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Files\settings.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

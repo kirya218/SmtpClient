@@ -14,16 +14,16 @@ namespace SMTP
 
             try
             {
-                listener = new TcpListener(IPAddress.Parse(settings.host), int.Parse(settings.port));
+                listener = new TcpListener(IPAddress.Parse(settings.Host), int.Parse(settings.Port));
                 listener.Start();
-                Console.WriteLine("Server IP: " + settings.host + " Server PORT: " + settings.port);
+                Console.WriteLine("Server IP: " + settings.Host + " Server PORT: " + settings.Port);
                 Console.WriteLine("S: Waiting for connection...");
 
                 while (true)
                 {
                     TcpClient client = listener.AcceptTcpClient();
-                    ClientObject clientObject = new(client, int.Parse(settings.port), settings.host);
-                    Console.WriteLine("S: The client connects to port 1024...");
+                    ClientObject clientObject = new(client, settings);
+                    Console.WriteLine("S: The client connects to port 25...");
 
                     Thread clientThread = new(new ThreadStart(clientObject.Process));
                     clientThread.Start();
