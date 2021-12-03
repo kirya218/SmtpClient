@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Sockets;
 
 namespace SMTP.Interfaces
 {
@@ -13,10 +8,16 @@ namespace SMTP.Interfaces
     public interface ICommands
     {
         /// <summary>
-        ///     Команда HELO. Выводит раcширения.
+        ///     Команда HELO. Здаровается с сервером.
         /// </summary>
         /// <returns>Ответ сервера</returns>
         string CommandHelo();
+
+        /// <summary>
+        ///     Команда EHLO. Выводит раcширения.
+        /// </summary>
+        /// <returns>Ответ сервера</returns>
+        string CommandEhlo();
 
         /// <summary>
         ///     Команда MAIL FROM. Назначает кто будет посылать письма.
@@ -64,12 +65,5 @@ namespace SMTP.Interfaces
         /// <param name="port">Порт</param>
         /// <returns>Ответ сервера</returns>
         string CommandSend(string host, int port);
-
-        /// <summary>
-        ///     Команда выхода.
-        /// </summary>
-        /// <param name="client">Клиент</param>
-        /// <returns>Ответ сервера</returns>
-        string CommandQuit(TcpClient client);
     }
 }

@@ -37,7 +37,17 @@ namespace SMTP.Controllers
             if (!commands.Contains("HELO"))
             {
                 commands.Add("HELO");
-                return "\r\n250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250-LOGIN";
+                return "250 domain name should be qualified";
+            }
+            else return ErrorString;
+        }
+
+        public string CommandEhlo()
+        {
+            if (!commands.Contains("EHLO"))
+            {
+                commands.Add("EHLO");
+                return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250-LOGIN";
             }
             else return ErrorString;
         }
@@ -61,7 +71,7 @@ namespace SMTP.Controllers
             {
                 if (email[1] == domain)
                 {
-                    if (!nicks.Contains(email[0])) return "This user is missing";
+                    if (!nicks.Contains(email[0])) return "550 unknown user account";
                     else
                     {
                         nicknameSend.Add(email[0]);
@@ -74,12 +84,12 @@ namespace SMTP.Controllers
             {
                 if (email[1] == domain)
                 {
-                    if (!nicks.Contains(email[0]))
+                    if (nicks.Contains(email[0]))
                     {
                         nicknameSend.Add(email[0]);
                         return "250 ok";
                     }
-                    else return "This user is missing";
+                    else return "550 unknown user account";
                 }
                 else return CheckMail(messageClient);
             }
@@ -164,12 +174,6 @@ namespace SMTP.Controllers
                 return "250 ok";
             else
                 return Obj;
-        }
-
-        public string CommandQuit(TcpClient client)
-        {
-            client.Close();
-            return "221 Close connection. See you soon";
         }
 
         /// <summary>

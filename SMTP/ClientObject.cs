@@ -43,7 +43,6 @@ namespace SMTP
             }
             while (stream.DataAvailable);
             Console.WriteLine("C: " + messageC);
-
             return builder;
         }
 
@@ -82,23 +81,33 @@ namespace SMTP
                 {
                     messageC = GetClientMessages(stream).ToString();
                     messageC = messageC.Replace("\r\n", string.Empty);
-                    if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
-                    else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
-                    else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
-                    else if (messageC.StartsWith("DATA"))
+                    if (messageC != string.Empty)
                     {
-                        messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.\r\n";
+                        if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
+                        else if (messageC.StartsWith("EHLO")) messageS = сommands.CommandEhlo();
+                        else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
+                        else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
+                        else if (messageC.StartsWith("DATA"))
+                        {
+                            messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.\r\n";
+                            SendMessageServerToClient(stream);
+                            messageS = сommands.CommandData(stream);
+                        }
+                        else if (messageC.StartsWith("SEND")) messageS = сommands.CommandSend(host, port);
+                        else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
+                        else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
+                        else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
+                        else if (messageC.StartsWith("QUIT"))
+                        {
+                            messageS = "221 mail.yamong.ru close connection. See you soon";
+                            SendMessageServerToClient(stream);
+                            client.Close();
+                            break;
+                        }
+                        else messageS = "500 This command does not exist";
+                        messageS += "\r\n";
                         SendMessageServerToClient(stream);
-                        messageS = сommands.CommandData(stream);
                     }
-                    else if (messageC.StartsWith("SEND")) messageS = сommands.CommandSend(host, port);
-                    else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
-                    else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
-                    else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
-                    else if (messageC.StartsWith("QUIT")) messageS = сommands.CommandQuit(client);
-                    else messageS = "500 This command does not exist";
-                    messageS += "\r\n";
-                    SendMessageServerToClient(stream);
                 }
             }
             catch (Exception ex)
