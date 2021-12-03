@@ -33,7 +33,7 @@ namespace SMTP
         /// </summary>
         /// <param name="stream">Поток</param>
         /// <returns>Возращает сообщение для сервера</returns>
-        private StringBuilder GetClientMessages(NetworkStream stream)
+        private void GetClientMessages(NetworkStream stream)
         {
             StringBuilder builder = new StringBuilder();
             do
@@ -42,8 +42,8 @@ namespace SMTP
                 builder.Append(Encoding.UTF8.GetString(data, 0, bytes));
             }
             while (stream.DataAvailable);
+            messageC = builder.ToString().Replace("\r\n", string.Empty);
             Console.WriteLine("C: " + messageC);
-            return builder;
         }
 
         /// <summary>
@@ -51,6 +51,7 @@ namespace SMTP
         /// </summary>
         private void SendMessageServerToClient(NetworkStream stream)
         {
+            messageS += "\r\n";
             data = Encoding.UTF8.GetBytes(messageS);
             stream.Write(data, 0, data.Length);
             messageS = string.Empty;
@@ -62,8 +63,7 @@ namespace SMTP
         /// <param name="stream">поток данных</param>
         private void StartServerTalk(NetworkStream stream)
         {
-            GetClientMessages(stream);
-            messageS = "220 smtp.yamong.ru Hello\r\n";
+            messageS = "220 smtp.yamong.ru Hello";
             SendMessageServerToClient(stream);
         }
 
@@ -79,8 +79,7 @@ namespace SMTP
                 StartServerTalk(stream);
                 while (true)
                 {
-                    messageC = GetClientMessages(stream).ToString();
-                    messageC = messageC.Replace("\r\n", string.Empty);
+                    GetClientMessages(stream);
                     if (messageC != string.Empty)
                     {
                         if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
@@ -89,7 +88,7 @@ namespace SMTP
                         else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
                         else if (messageC.StartsWith("DATA"))
                         {
-                            messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.\r\n";
+                            messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.";
                             SendMessageServerToClient(stream);
                             messageS = сommands.CommandData(stream);
                         }
@@ -105,7 +104,6 @@ namespace SMTP
                             break;
                         }
                         else messageS = "500 This command does not exist";
-                        messageS += "\r\n";
                         SendMessageServerToClient(stream);
                     }
                 }

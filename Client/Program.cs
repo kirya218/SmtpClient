@@ -20,12 +20,7 @@ namespace Client
 
                 while (true)
                 {
-                    Console.Write("C:");
-                    string message = Console.ReadLine();
-                    byte[] data = Encoding.UTF8.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
-
-                    data = new byte[1024];
+                    byte[] data = new byte[1024];
                     StringBuilder builder = new();
                     int bytes = 0;
                     do
@@ -35,8 +30,13 @@ namespace Client
                     }
                     while (stream.DataAvailable);
 
-                    message = builder.ToString();
-                    Console.WriteLine("S: " + message);
+                    string message = builder.ToString();
+                    Console.Write("S: " + message);
+
+                    Console.Write("C:");
+                    message = Console.ReadLine() + "\r\n";
+                    data = Encoding.UTF8.GetBytes(message);
+                    stream.Write(data, 0, data.Length);
                 }
             }
             catch
