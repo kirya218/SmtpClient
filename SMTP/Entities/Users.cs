@@ -19,12 +19,13 @@ namespace SMTP.Entities
         /// </summary>
         public Users()
         {
+            char sep = Path.DirectorySeparatorChar;
             if (AllUsers.Count == 0)
             {
-                string[] users = Directory.GetFiles("Files/Accounts");
+                string[] users = Directory.GetFiles($"Files{sep}Accounts");
                 for (int i = 0; i < users.Length; i++)
                 {
-                    users[i] = users[i].Replace("Files/Accounts\\", string.Empty);
+                    users[i] = users[i].Replace($"Files{sep}Accounts{sep}", string.Empty);
                     users[i] = users[i].Replace(".txt", string.Empty);
                 }
                 AllUsers = users.ToList();

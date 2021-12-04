@@ -63,7 +63,8 @@ namespace SMTP.Interfaces
         /// </summary>
         /// <param name="host">Хост</param>
         /// <param name="port">Порт</param>
+        /// <param name="relay">Релей</param>
         /// <returns>Ответ сервера</returns>
-        string CommandSend(string host, int port);
+        string CommandSend(string host, int port, bool relay);
     }
 }

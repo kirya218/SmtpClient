@@ -91,8 +91,10 @@ namespace SMTP
                             messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.";
                             SendMessageServerToClient(stream);
                             messageS = сommands.CommandData(stream);
-                            SendMessageServerToClient(stream);
-                            messageS = сommands.CommandSend(host, port);
+                            if (messageS != "250 ok")
+                                SendMessageServerToClient(stream);
+                            else
+                                messageS = сommands.CommandSend(host, port, relay);
                         }
                         else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
                         else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();

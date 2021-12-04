@@ -100,39 +100,46 @@ namespace SMTP.Controllers
             string message = string.Empty;
 
             if (commands.Contains("MAIL FROM") && commands.Contains("RCPT TO"))
+            {
                 if (!commands.Contains("DATA"))
                 {
                     commands.Add("DATA");
-                    do
-                    {
-                        StringBuilder builder = new StringBuilder();
-                        byte[] data = new byte[1024];
-                        int bytes = stream.Read(data, 0, data.Length);
-                        message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
-                        message = message.Replace("\r\n", string.Empty);
-                        string[] messageWords = message.Split(' ');
-                        foreach (var item in messageWords)
-                        {
-                            if (item.Contains("sub"))
-                            {
-                                string[] otvet = item.Split(':');
-                                this.message.Subject = otvet[1];
-                                message = string.Empty;
-                                break;
-                            }
-                        }
-                        if (message != ".")
-                        {
-                            if (message != string.Empty)
-                                this.message.Body += message + "\r\n";
-                            data = Encoding.UTF8.GetBytes(" ");
-                            stream.Write(data, 0, data.Length);
-                        }
-                    }
-                    while (message != ".");
-                    return "250 ok";
                 }
                 else return ErrorString;
+
+                do
+                {
+                    StringBuilder builder = new StringBuilder();
+                    byte[] data = new byte[1024];
+                    int bytes = stream.Read(data, 0, data.Length);
+                    message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
+                    message = message.Replace("\r\n", string.Empty);
+                    if (message.Contains("Subject"))
+                    {
+                        string[] otvet = message.Split(':');
+                        this.message.Subject = otvet[1];
+                        message = string.Empty;
+                    }
+                    else if (message.Contains("Content-Type"))
+                    {
+                        string[] otvet = message.Split(':');
+                        if (otvet[1] == "text/plain")
+                            options.IsBodyHTML = false;
+                        else if(otvet[1] == "html")
+                            options.IsBodyHTML = true;
+                        message = string.Empty;
+                    }
+                    if (message != ".")
+                    {
+                        if (message != string.Empty)
+                            this.message.Body += message + "\r\n";
+                        data = Encoding.UTF8.GetBytes(" ");
+                        stream.Write(data, 0, data.Length);
+                    }
+                }
+                while (message != ".");
+                return "250 ok";
+            }
             else return "First enter 'MAIL FROM' and 'RCPT TO'";
         }
 
@@ -166,10 +173,10 @@ namespace SMTP.Controllers
             else return ErrorString;
         }
 
-        public string CommandSend(string host, int port)
+        public string CommandSend(string host, int port, bool relay)
         {
             message.To = emailTO;
-            var Obj = CheckInfo(host, port);
+            var Obj = CheckInfo(host, port, relay);
             if (Obj == string.Empty)
                 return "250 ok";
             else
@@ -179,33 +186,37 @@ namespace SMTP.Controllers
         /// <summary>
         ///     Проверяет наличие всех обезательных полей для отправления сообщения на другой сервер
         /// </summary>
-        private string CheckInfo(string host, int port)
+        private string CheckInfo(string host, int port, bool relay)
         {
             string messageServer = string.Empty;
-            if (message.From != string.Empty && (message.To.Count != 0 || nicknameSend.Count != 0) && message.Body != string.Empty && message.Subject != string.Empty)
+            if (message.From != null && (message.To.Count != 0 || nicknameSend.Count != 0) && message.Body != null && message.Subject != null)
             {
-                if (authorization.Login != string.Empty && authorization.Password != string.Empty)
+                CreateMessagesController createMessage;
+                SetSettingSMTP settings;
+                info.Authorization = authorization;
+                info.Message = message;
+                info.Options = options;
+                info.Port = port;
+                info.Host = host;
+                if (message.To.Count != 0)
                 {
-                    if (options.EnableSSL == true)
+                    if (authorization.Login != null && authorization.Password != null)
                     {
-                        CreateMessagesController createMessage;
-                        SetSettingSMTP settings;
-                        info.Authorization = authorization;
-                        info.Message = message;
-                        info.Options = options;
-                        info.Port = port;
-                        info.Host = host;
-                        if (message.To.Count != 0)
+                        if (options.EnableSSL == true)
+                        {
                             settings = new SetSettingSMTP(info);
-                        if(nicknameSend.Count != 0)
-                            foreach(var item in nicknameSend)
-                                createMessage = new CreateMessagesController(info, item);
-
-                        return string.Empty;
+                            return string.Empty;
+                        }
+                        else return "245 Turn on SSL";
                     }
-                    else return "245 Turn on SSL";
+                    else return "245 Logn In";
                 }
-                else return "245 Logn In";
+                else
+                {
+                    foreach (var item in nicknameSend)
+                        createMessage = new CreateMessagesController(info, item);
+                    return string.Empty;
+                }
             }
             else
             {
@@ -218,6 +229,8 @@ namespace SMTP.Controllers
                 return messageServer;
             }
         }
+
+
 
         /// <summary>
         ///     Проверяет email
