@@ -43,7 +43,8 @@ namespace SMTP
             }
             while (stream.DataAvailable);
             messageC = builder.ToString().Replace("\r\n", string.Empty);
-            Console.WriteLine("C: " + messageC);
+            if (messageC != string.Empty)
+                Console.WriteLine("C: " + messageC);
         }
 
         /// <summary>
