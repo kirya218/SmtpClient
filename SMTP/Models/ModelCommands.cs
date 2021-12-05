@@ -10,7 +10,7 @@ namespace SMTP.Models
         /// <summary>
         ///     Все команды для SMTP
         /// </summary>
-        public List<string>  commands = new();
+        public List<string>  commands = new List<string>();
 
         /// <summary>
         ///     Все команды записывает в лист

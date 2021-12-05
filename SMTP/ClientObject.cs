@@ -9,7 +9,7 @@ namespace SMTP
     {
         //hQ86vJf7K6k9e3HtEWcG
         private TcpClient client;
-        private readonly СommandСontroller сommands = new();
+        private readonly СommandСontroller сommands = new СommandСontroller();
         private string messageS, messageC, host, domain;
         private bool relay;
         private int port;
