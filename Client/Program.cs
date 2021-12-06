@@ -21,7 +21,7 @@ namespace Client
                 while (true)
                 {
                     byte[] data = new byte[1024];
-                    StringBuilder builder = new();
+                    StringBuilder builder = new StringBuilder();
                     int bytes = 0;
                     do
                     {
@@ -33,7 +33,7 @@ namespace Client
                     string message = builder.ToString();
                     Console.Write("S: " + message);
 
-                    Console.Write("C:");
+                    Console.Write("C: ");
                     message = Console.ReadLine() + "\r\n";
                     data = Encoding.UTF8.GetBytes(message);
                     stream.Write(data, 0, data.Length);

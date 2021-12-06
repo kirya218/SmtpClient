@@ -101,11 +101,7 @@ namespace SMTP.Controllers
 
             if (commands.Contains("MAIL FROM") && commands.Contains("RCPT TO"))
             {
-                if (!commands.Contains("DATA"))
-                {
-                    commands.Add("DATA");
-                }
-                else return ErrorString;
+                if (!commands.Contains("DATA")) commands.Add("DATA");
 
                 do
                 {
@@ -125,7 +121,7 @@ namespace SMTP.Controllers
                         string[] otvet = message.Split(':');
                         if (otvet[1] == "text/plain")
                             options.IsBodyHTML = false;
-                        else if(otvet[1] == "html")
+                        else if (otvet[1] == "html")
                             options.IsBodyHTML = true;
                         message = string.Empty;
                     }
@@ -205,18 +201,17 @@ namespace SMTP.Controllers
                         if (options.EnableSSL == true)
                         {
                             settings = new SetSettingSMTP(info);
-                            return string.Empty;
                         }
                         else return "245 Turn on SSL";
                     }
                     else return "245 Logn In";
                 }
-                else
-                {
+
+                if (nicknameSend.Count != 0)
                     foreach (var item in nicknameSend)
                         createMessage = new CreateMessagesController(info, item);
-                    return string.Empty;
-                }
+                return string.Empty;
+
             }
             else
             {

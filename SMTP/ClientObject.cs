@@ -53,6 +53,7 @@ namespace SMTP
         private void SendMessageServerToClient(NetworkStream stream)
         {
             messageS += "\r\n";
+            Console.Write("S: " + messageS);
             data = Encoding.UTF8.GetBytes(messageS);
             stream.Write(data, 0, data.Length);
             messageS = string.Empty;

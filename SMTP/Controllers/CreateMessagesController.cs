@@ -15,8 +15,8 @@ namespace SMTP.Controllers
         /// <param name="info">Все параметры письма</param>
         public CreateMessagesController(ModelInfo info, string nickname)
         {
-            string message = "<from>" + info.Message.From + "</from>" + "<subject>" + info.Message.Subject.Trim() + "</subject>" + "<body>" + info.Message.Body.Replace("\r\n", ".") + "</body>" + "<date>" + DateTime.Now + "</date>";
-            StreamWriter fstream = new StreamWriter("Files/Accounts/" + nickname + ".txt");
+            string message = "From:" + info.Message.From + " | Subject:" + info.Message.Subject.Trim() + " | Body:" + info.Message.Body.Replace("\r\n", ".") + " | Date:" + DateTime.Now;
+            StreamWriter fstream = new StreamWriter("Files/Accounts/" + nickname + ".txt", true);
             fstream.WriteLine(message);
             fstream.Close();
         }
