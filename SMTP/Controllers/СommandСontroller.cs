@@ -47,7 +47,7 @@ namespace SMTP.Controllers
             if (!commands.Contains("EHLO"))
             {
                 commands.Add("EHLO");
-                return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250-LOGIN";
+                return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250 LOGIN";
             }
             else return ErrorString;
         }
