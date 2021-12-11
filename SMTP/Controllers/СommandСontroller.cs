@@ -17,9 +17,7 @@ namespace SMTP.Controllers
         private ModelMessage message = new ModelMessage();
         private ModelAuthorization authorization = new ModelAuthorization();
         private ModelAdditionalOptions options = new ModelAdditionalOptions();
-        private ModelCommands commandsSMTP = new ModelCommands();
         private Users users = new Users();
-        private List<string> emailTO = new List<string>();
         private List<string> nicknameSend = new List<string>();
 
         /// <summary>
@@ -71,7 +69,7 @@ namespace SMTP.Controllers
             {
                 if (email[1] == domain)
                 {
-                    if (!nicks.Contains(email[0])) return "550 unknown user account";
+                    if (!nicks.Contains(email[0])) return "550 No such user here";
                     else
                     {
                         nicknameSend.Add(email[0]);
@@ -89,7 +87,7 @@ namespace SMTP.Controllers
                         nicknameSend.Add(email[0]);
                         return "250 ok";
                     }
-                    else return "550 unknown user account";
+                    else return "550 No such user here";
                 }
                 else return CheckMail(messageClient);
             }
@@ -108,33 +106,41 @@ namespace SMTP.Controllers
                     StringBuilder builder = new StringBuilder();
                     byte[] data = new byte[1024];
                     int bytes = stream.Read(data, 0, data.Length);
-                    message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
+                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split("\r\n");
+                    for (int i = 0; i < commandMessage.Length; i++)
+                    {
+                        if (commandMessage[i].Contains("Subject"))
+                        {
+                            string[] otvet = commandMessage[i].Split(':');
+                            this.message.Subject = otvet[1];
+                            commandMessage[i] = string.Empty;
+                        }
+                        else if (commandMessage[i].Contains("Content-Type"))
+                        {
+                            string[] otvet = commandMessage[i].Split(':');
+                            if (otvet[1] == "text/plain")
+                                options.IsBodyHTML = false;
+                            else if (otvet[1] == "html")
+                                options.IsBodyHTML = true;
+                            commandMessage[i] = string.Empty;
+                        }
+                        else if (commandMessage[i] == string.Empty)
+                        {
+                            message = null;
+                            break;
+                        }
+                        else if (commandMessage[i] != ".") commandMessage[i] = string.Empty;
+                    }
+                    foreach (var item in commandMessage) if (item != "") message += item + "\r\n";
                     message = message.Replace("\r\n", string.Empty);
-                    if (message.Contains("Subject"))
-                    {
-                        string[] otvet = message.Split(':');
-                        this.message.Subject = otvet[1];
-                        message = string.Empty;
-                    }
-                    else if (message.Contains("Content-Type"))
-                    {
-                        string[] otvet = message.Split(':');
-                        if (otvet[1] == "text/plain")
-                            options.IsBodyHTML = false;
-                        else if (otvet[1] == "html")
-                            options.IsBodyHTML = true;
-                        message = string.Empty;
-                    }
                     if (message != ".")
                     {
                         if (message != string.Empty)
-                            this.message.Body += message + "\r\n";
-                        data = Encoding.UTF8.GetBytes(" ");
-                        stream.Write(data, 0, data.Length);
+                            this.message.Body += message;
                     }
                 }
                 while (message != ".");
-                return "250 ok";
+                return CheckInfo();
             }
             else return "First enter 'MAIL FROM' and 'RCPT TO'";
         }
@@ -169,60 +175,32 @@ namespace SMTP.Controllers
             else return ErrorString;
         }
 
-        public string CommandSend(string host, int port, bool relay)
-        {
-            message.To = emailTO;
-            var Obj = CheckInfo(host, port, relay);
-            if (Obj == string.Empty)
-                return "250 ok";
-            else
-                return Obj;
-        }
-
         /// <summary>
         ///     Проверяет наличие всех обезательных полей для отправления сообщения на другой сервер
         /// </summary>
-        private string CheckInfo(string host, int port, bool relay)
+        private string CheckInfo()
         {
-            string messageServer = string.Empty;
-            if (message.From != null && (message.To.Count != 0 || nicknameSend.Count != 0) && message.Body != null && message.Subject != null)
+            CreateMessagesController createMessage;
+            info.Authorization = authorization;
+            info.Message = message;
+            info.Options = options;
+            if (message.To != null)
             {
-                CreateMessagesController createMessage;
-                SetSettingSMTP settings;
-                info.Authorization = authorization;
-                info.Message = message;
-                info.Options = options;
-                info.Port = port;
-                info.Host = host;
-                if (message.To.Count != 0)
+                if (authorization.Login != null && authorization.Password != null)
                 {
-                    if (authorization.Login != null && authorization.Password != null)
+                    if (options.EnableSSL == true)
                     {
-                        if (options.EnableSSL == true)
-                        {
-                            settings = new SetSettingSMTP(info);
-                        }
-                        else return "245 Turn on SSL";
+                        _ = new SetSettingSMTP(info);
                     }
-                    else return "245 Logn In";
+                    else return "245 Turn on SSL";
                 }
-
-                if (nicknameSend.Count != 0)
-                    foreach (var item in nicknameSend)
-                        createMessage = new CreateMessagesController(info, item);
-                return string.Empty;
-
+                else return "245 Logn In";
             }
-            else
-            {
-                messageServer = "Not all fields are filled in.\r\nThese commands were not executed: ";
-                foreach (var item in commands)
-                {
-                    if (!commandsSMTP.commands.Contains(item))
-                        messageServer += item + "; ";
-                }
-                return messageServer;
-            }
+
+            if (nicknameSend.Count != 0)
+                foreach (var item in nicknameSend)
+                    createMessage = new CreateMessagesController(info, item);
+            return "250 OK";
         }
 
 
@@ -241,7 +219,7 @@ namespace SMTP.Controllers
             else
             {
                 if (clientMessage.StartsWith("MAIL FROM")) message.From = email;
-                else if (clientMessage.StartsWith("RCPT TO")) emailTO.Add(email);
+                else if (clientMessage.StartsWith("RCPT TO")) message.To.Add(email);
                 return "250 ok";
             }
         }
@@ -251,7 +229,7 @@ namespace SMTP.Controllers
         /// </summary>
         /// <param name="message">Сообщение пользователя</param>
         /// <returns>Чистый email</returns>
-        private string GetClearEmail(string message)
+        private static string GetClearEmail(string message)
         {
             string email = string.Empty;
             bool fg = false;
@@ -262,7 +240,10 @@ namespace SMTP.Controllers
                 if (fg == true)
                 {
                     if (item != '<' && item != '>')
+                    {
                         email += item;
+                    }
+                    else if (item == '>') break;
                 }
             }
             return email;

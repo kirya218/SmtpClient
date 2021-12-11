@@ -57,14 +57,5 @@ namespace SMTP.Interfaces
         /// <param name="messageClient">Запрос пользователя</param>
         /// <returns>Ответ сервера</returns>
         string CommandAuth(string messageClient);
-
-        /// <summary>
-        ///     Команда SEND. Отправляет сообщение.
-        /// </summary>
-        /// <param name="host">Хост</param>
-        /// <param name="port">Порт</param>
-        /// <param name="relay">Релей</param>
-        /// <returns>Ответ сервера</returns>
-        string CommandSend(string host, int port, bool relay);
     }
 }

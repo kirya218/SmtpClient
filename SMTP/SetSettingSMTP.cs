@@ -16,7 +16,7 @@ namespace SMTP
         public SetSettingSMTP(ModelInfo info)
         {
             string[] str = info.Authorization.Login.Split('@');
-            SmtpClient Smtp = new SmtpClient("smtp." + str[1], info.Port);
+            SmtpClient Smtp = new SmtpClient("smtp." + str[1], 25);
             Smtp.Credentials = new NetworkCredential(info.Authorization.Login, info.Authorization.Password);
             Smtp.EnableSsl = info.Options.EnableSSL;
             MailMessage MessageSMTP = new MailMessage();

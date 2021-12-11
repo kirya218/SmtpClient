@@ -90,13 +90,9 @@ namespace SMTP
                         else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
                         else if (messageC.StartsWith("DATA"))
                         {
-                            messageS = "354 Start writing a message to finish writing <CRLF>.<CRLF>.";
+                            messageS = "354 Start mail input; end with <CRLF>.<CRLF>";
                             SendMessageServerToClient(stream);
                             messageS = сommands.CommandData(stream);
-                            if (messageS != "250 ok")
-                                SendMessageServerToClient(stream);
-                            else
-                                messageS = сommands.CommandSend(host, port, relay);
                         }
                         else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
                         else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
@@ -111,6 +107,7 @@ namespace SMTP
                         else messageS = "500 This command does not exist";
                         SendMessageServerToClient(stream);
                     }
+                    else client.Close();
                 }
             }
             catch (Exception ex)

@@ -25,15 +25,5 @@ namespace SMTP.Models
         ///     Модель допольнительных опций
         /// </summary>
         public ModelAdditionalOptions Options { get; set; }
-
-        /// <summary>
-        ///     Порт
-        /// </summary>
-        public int Port { get; set; }
-
-        /// <summary>
-        ///     TCP/IP
-        /// </summary>
-        public string Host { get; set; }
     }
 }
