@@ -96,45 +96,18 @@ namespace SMTP.Controllers
 
         public string CommandData(NetworkStream stream)
         {
-            string message = string.Empty;
-
             if (commands.Contains("MAIL FROM") && commands.Contains("RCPT TO"))
             {
                 if (!commands.Contains("DATA")) commands.Add("DATA");
 
+                string message;
                 do
                 {
                     StringBuilder builder = new StringBuilder();
                     byte[] data = new byte[1024];
                     int bytes = stream.Read(data, 0, data.Length);
-                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split(new string[] { "\r\n" }, StringSplitOptions.None);
-                    message = string.Join("\r\n", commandMessage);
+                    message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
                     Console.WriteLine(message);
-                    for (int i = 0; i < commandMessage.Length; i++)
-                    {
-                        if (commandMessage[i].Contains("Subject"))
-                        {
-                            string[] otvet = commandMessage[i].Split(':');
-                            this.message.Subject = otvet[1];
-                            commandMessage[i] = string.Empty;
-                        }
-                        else if (commandMessage[i].Contains("Content-Type"))
-                        {
-                            string[] otvet = commandMessage[i].Split(':');
-                            if (otvet[1] == "text/plain")
-                                options.IsBodyHTML = false;
-                            else if (otvet[1] == "html")
-                                options.IsBodyHTML = true;
-                            commandMessage[i] = string.Empty;
-                        }
-                        else if (commandMessage[i] == string.Empty)
-                        {
-                            //message = null;
-                            break;
-                        }
-                        //else if (commandMessage[i] != ".") commandMessage[i] = string.Empty;
-                    }
-                    //foreach (var item in commandMessage) if (item != "") message += item + "\r\n";
                     if (message.Replace("\r\n", string.Empty) != ".")
                     {
                         if (message != string.Empty)

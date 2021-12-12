@@ -23,7 +23,7 @@ namespace SMTP
                 {
                     TcpClient client = listener.AcceptTcpClient();
                     ClientObject clientObject = new ClientObject(client, settings);
-                    Console.WriteLine("S: The client connects to port 25...");
+                    Console.WriteLine("S: The client connects to server...");
 
                     Thread clientThread = new Thread(new ThreadStart(clientObject.Process));
                     clientThread.Start();
