@@ -1,6 +1,7 @@
 ﻿using SMTP.Entities;
 using SMTP.Interfaces;
 using SMTP.Models;
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -106,7 +107,7 @@ namespace SMTP.Controllers
                     StringBuilder builder = new StringBuilder();
                     byte[] data = new byte[1024];
                     int bytes = stream.Read(data, 0, data.Length);
-                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split("\r\n");
+                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split(new string[] {"\r\n"}, StringSplitOptions.None);
                     for (int i = 0; i < commandMessage.Length; i++)
                     {
                         if (commandMessage[i].Contains("Subject"))
@@ -190,7 +191,7 @@ namespace SMTP.Controllers
                 {
                     if (options.EnableSSL == true)
                     {
-                        _ = new SetSettingSMTP(info);
+                        var a = new SetSettingSMTP(info);
                     }
                     else return "245 Turn on SSL";
                 }
