@@ -107,7 +107,9 @@ namespace SMTP.Controllers
                     StringBuilder builder = new StringBuilder();
                     byte[] data = new byte[1024];
                     int bytes = stream.Read(data, 0, data.Length);
-                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split(new string[] {"\r\n"}, StringSplitOptions.None);
+                    string[] commandMessage = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString().Split(new string[] { "\r\n" }, StringSplitOptions.None);
+                    message = string.Join("\r\n", commandMessage);
+                    Console.WriteLine(message);
                     for (int i = 0; i < commandMessage.Length; i++)
                     {
                         if (commandMessage[i].Contains("Subject"))
@@ -127,18 +129,18 @@ namespace SMTP.Controllers
                         }
                         else if (commandMessage[i] == string.Empty)
                         {
-                            message = null;
+                            //message = null;
                             break;
                         }
-                        else if (commandMessage[i] != ".") commandMessage[i] = string.Empty;
+                        //else if (commandMessage[i] != ".") commandMessage[i] = string.Empty;
                     }
-                    foreach (var item in commandMessage) if (item != "") message += item + "\r\n";
-                    message = message.Replace("\r\n", string.Empty);
-                    if (message != ".")
+                    //foreach (var item in commandMessage) if (item != "") message += item + "\r\n";
+                    if (message.Replace("\r\n", string.Empty) != ".")
                     {
                         if (message != string.Empty)
                             this.message.Body += message;
                     }
+                    else break;
                 }
                 while (message != ".");
                 return CheckInfo();
