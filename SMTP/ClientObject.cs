@@ -7,25 +7,18 @@ namespace SMTP
 {
     public class ClientObject
     {
-        //hQ86vJf7K6k9e3HtEWcG
-        private TcpClient client;
+        private readonly TcpClient client;
         private readonly СommandСontroller сommands = new СommandСontroller();
-        private string messageS, messageC, host, domain;
-        private bool relay;
-        private int port;
+        private string messageS, messageC;
         private byte[] data = new byte[1024];
 
         /// <summary>
         ///     Создает объект клиента для общения с ним
         /// </summary>
         /// <param name="tcpClient">клиент</param>
-        public ClientObject(TcpClient tcpClient, Settings settings)
+        public ClientObject(TcpClient tcpClient)
         {
             client = tcpClient;
-            port = Convert.ToInt32(settings.Port);
-            host = settings.Host;
-            relay = settings.Relay;
-            domain = settings.Domain;
         }
 
         /// <summary>
@@ -87,16 +80,13 @@ namespace SMTP
                         if (messageC.StartsWith("HELO")) messageS = сommands.CommandHelo();
                         else if (messageC.StartsWith("EHLO")) messageS = сommands.CommandEhlo();
                         else if (messageC.StartsWith("MAIL FROM")) messageS = сommands.CommandMailFrom(messageC);
-                        else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC, domain, relay);
+                        else if (messageC.StartsWith("RCPT TO")) messageS = сommands.CommandRcptTo(messageC);
                         else if (messageC.StartsWith("DATA"))
                         {
                             messageS = "354 Start mail input; end with <CRLF>.<CRLF>";
                             SendMessageServerToClient(stream);
                             messageS = сommands.CommandData(stream);
                         }
-                        else if (messageC.StartsWith("STARTSSL")) messageS = сommands.CommandStartSsl();
-                        else if (messageC.StartsWith("LOGIN")) messageS = сommands.CommandLogin();
-                        else if (messageC.StartsWith("AUTH")) messageS = сommands.CommandAuth(messageC);
                         else if (messageC.StartsWith("QUIT"))
                         {
                             messageS = "221 mail.yamong.ru close connection. See you soon";

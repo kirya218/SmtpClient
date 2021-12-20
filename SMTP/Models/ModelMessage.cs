@@ -5,26 +5,31 @@ namespace SMTP.Models
     /// <summary>
     ///     Модель сообщения
     /// </summary>
-    public class ModelMessage
+    public static class ModelMessage
     {
         /// <summary>
         ///     Откуда будет послыно сообщение
         /// </summary>
-        public string From { get; set; }
+        public static string From { get; set; }
 
         /// <summary>
         ///     Куда будет отправлено сообщение
         /// </summary>
-        public List<string> To { get; set; }
+        public static List<string> To = new List<string>();
 
         /// <summary>
         ///     Содержимое сообщения
         /// </summary>
-        public string Body { get; set; }
+        public static string Body { get; set; }
 
         /// <summary>
         ///     Тема сообщения
         /// </summary>
-        public string Subject { get; set; }
+        public static string Subject { get; set; }
+
+        /// <summary>
+        ///     Полное сообщение.
+        /// </summary>
+        public static string FullMessage { get; set; }
     }
 }

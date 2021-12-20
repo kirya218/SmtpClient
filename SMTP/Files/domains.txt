@@ -1,0 +1,4 @@
+domain:mail.ru
+port:25
+login:boss.niga03@mail.ru
+password:hQ86vJf7K6k9e3HtEWcG

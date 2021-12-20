@@ -33,6 +33,6 @@ namespace SMTP.Entities
         }
 
         /// <returns>Возращает всех пользователей списком</returns>
-        public List<string> GetUsers() => AllUsers;
+        public static List<string> GetUsers() => AllUsers;
     }
 }

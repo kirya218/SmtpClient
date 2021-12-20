@@ -1,4 +1,5 @@
 ﻿using System;
+using SMTP.Settings;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -10,19 +11,17 @@ namespace SMTP
         static TcpListener listener;
         static void Main(string[] args)
         { 
-            Settings settings = new Settings();
-
             try
             {
-                listener = new TcpListener(IPAddress.Parse(settings.Host), int.Parse(settings.Port));
+                listener = new TcpListener(IPAddress.Parse(Settings.Settings.Host), int.Parse(Settings.Settings.Port));
                 listener.Start();
-                Console.WriteLine("Server IP: " + settings.Host + " Server PORT: " + settings.Port);
+                Console.WriteLine("Server IP: " + Settings.Settings.Host + " Server PORT: " + Settings.Settings.Port);
                 Console.WriteLine("S: Waiting for connection...");
 
                 while (true)
                 {
                     TcpClient client = listener.AcceptTcpClient();
-                    ClientObject clientObject = new ClientObject(client, settings);
+                    ClientObject clientObject = new ClientObject(client);
                     Console.WriteLine("S: The client connects to server...");
 
                     Thread clientThread = new Thread(new ThreadStart(clientObject.Process));

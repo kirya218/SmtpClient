@@ -31,31 +31,12 @@ namespace SMTP.Interfaces
         /// </summary>
         /// <param name="messageClient">Запрос пользователя</param>
         /// <returns>Ответ сервера</returns>
-        string CommandRcptTo(string messageClient, string domen, bool relay);
+        string CommandRcptTo(string messageClient);
 
         /// <summary>
         ///     Команда DATA. Начинает запись самого письма.
         /// </summary>
         /// <returns>Ответ сервера</returns>
         string CommandData(NetworkStream stream);
-
-        /// <summary>
-        ///     Команда STARTSSL, включает защищенное соединение.
-        /// </summary>
-        /// <returns>Ответ сервера</returns>
-        string CommandStartSsl();
-
-        /// <summary>
-        ///     Команда LOGIN. Начинает авторизацию.
-        /// </summary>
-        /// <returns>Ответ сервера</returns>
-        string CommandLogin();
-
-        /// <summary>
-        ///     Команда AUTH. Задает логин и пароль пользователя.
-        /// </summary>
-        /// <param name="messageClient">Запрос пользователя</param>
-        /// <returns>Ответ сервера</returns>
-        string CommandAuth(string messageClient);
     }
 }

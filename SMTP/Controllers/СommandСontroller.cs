@@ -14,10 +14,6 @@ namespace SMTP.Controllers
     /// </summary>
     public class СommandСontroller : ICommands
     {
-        private ModelInfo info = new ModelInfo();
-        private ModelMessage message = new ModelMessage();
-        private ModelAuthorization authorization = new ModelAuthorization();
-        private ModelAdditionalOptions options = new ModelAdditionalOptions();
         private Users users = new Users();
         private List<string> nicknameSend = new List<string>();
 
@@ -61,14 +57,14 @@ namespace SMTP.Controllers
             else return ErrorString;
         }
 
-        public string CommandRcptTo(string messageClient, string domain, bool relay)
+        public string CommandRcptTo(string messageClient)
         {
             commands.Add("RCPT TO");
             string[] email = GetClearEmail(messageClient).Split('@');
-            List<string> nicks = users.GetUsers();
-            if (relay == false)
+            List<string> nicks = Users.GetUsers();
+            if (Settings.Settings.Relay == false)
             {
-                if (email[1] == domain)
+                if (email[1] == Settings.Settings.Domain)
                 {
                     if (!nicks.Contains(email[0])) return "550 No such user here";
                     else
@@ -81,7 +77,7 @@ namespace SMTP.Controllers
             }
             else
             {
-                if (email[1] == domain)
+                if (email[1] == Settings.Settings.Domain)
                 {
                     if (nicks.Contains(email[0]))
                     {
@@ -111,7 +107,10 @@ namespace SMTP.Controllers
                     if (message.Replace("\r\n", string.Empty) != ".")
                     {
                         if (message != string.Empty)
-                            this.message.Body += message;
+                        {
+                            ModelMessage.FullMessage += message;
+                            MessageToServer(message);
+                        }
                     }
                     else break;
                 }
@@ -121,65 +120,22 @@ namespace SMTP.Controllers
             else return "First enter 'MAIL FROM' and 'RCPT TO'";
         }
 
-        public string CommandStartSsl()
-        {
-            if (!commands.Contains("STARTSSL"))
-            {
-                commands.Add("STARTSSL");
-                options.EnableSSL = true;
-                return "250 ok";
-            }
-            else return "You have already enabled SSL";
-        }
-
-        public string CommandLogin()
-        {
-            if (!commands.Contains("LOGIN"))
-                return "Enter your username and password via <CRLF>:<CRLF>. Starting the command with <CR LF>AUTH<CR LF>";
-            else return ErrorString;
-        }
-
-        public string CommandAuth(string messageClient)
-        {
-            if (!commands.Contains("AUTH"))
-            {
-                string[] cred = messageClient.Split(':');
-                authorization.Login = cred[1];
-                authorization.Password = cred[2];
-                return "250 ok";
-            }
-            else return ErrorString;
-        }
-
         /// <summary>
         ///     Проверяет наличие всех обезательных полей для отправления сообщения на другой сервер
         /// </summary>
         private string CheckInfo()
         {
             CreateMessagesController createMessage;
-            info.Authorization = authorization;
-            info.Message = message;
-            info.Options = options;
-            if (message.To != null)
+            if (ModelMessage.To != null)
             {
-                if (authorization.Login != null && authorization.Password != null)
-                {
-                    if (options.EnableSSL == true)
-                    {
-                        var a = new SetSettingSMTP(info);
-                    }
-                    else return "245 Turn on SSL";
-                }
-                else return "245 Logn In";
+                var a = new SetSettingSMTP();
             }
 
             if (nicknameSend.Count != 0)
                 foreach (var item in nicknameSend)
-                    createMessage = new CreateMessagesController(info, item);
+                    createMessage = new CreateMessagesController(item);
             return "250 OK";
         }
-
-
 
         /// <summary>
         ///     Проверяет email
@@ -194,9 +150,34 @@ namespace SMTP.Controllers
                 return "Incorrectly entered email";
             else
             {
-                if (clientMessage.StartsWith("MAIL FROM")) message.From = email;
-                else if (clientMessage.StartsWith("RCPT TO")) message.To.Add(email);
+                if (clientMessage.StartsWith("MAIL FROM")) ModelMessage.From = email;
+                else if (clientMessage.StartsWith("RCPT TO")) ModelMessage.To.Add(email);
                 return "250 ok";
+            }
+        }
+
+        /// <summary>
+        ///     Создает сообщение для сервера.
+        /// </summary>
+        /// <param name="clientMessage">сообщение клиента</param>
+        private void MessageToServer(string clientMessage)
+        {
+            string[] message = clientMessage.Split("\r\n");
+            for (int i = 0; i < message.Length; i++)
+            {
+                if (message[i].Contains("Subject"))
+                {
+                    string[] k = message[i].Split(':');
+                    ModelMessage.Subject = k[1];
+                }
+                else if (message[i] == "")
+                {
+                    for (int j = i + 1; j < message.Length; j++)
+                    {
+                        ModelMessage.Body += message[j];
+                    }
+                    break;
+                }
             }
         }
 

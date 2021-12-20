@@ -1,5 +1,4 @@
 ﻿using SMTP.Models;
-using System;
 using System.IO;
 
 namespace SMTP.Controllers
@@ -13,10 +12,10 @@ namespace SMTP.Controllers
         ///     Создает письмо и записывает в файл.
         /// </summary>
         /// <param name="info">Все параметры письма</param>
-        public CreateMessagesController(ModelInfo info, string nickname)
+        public CreateMessagesController(string nickname)
         {
             StreamWriter fstream = new StreamWriter("Files/Accounts/" + nickname + ".txt", true);
-            fstream.WriteLine(info.Message.Body);
+            fstream.WriteLine(ModelMessage.FullMessage);
             fstream.Close();
         }
     }

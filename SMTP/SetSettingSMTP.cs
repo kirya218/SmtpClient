@@ -1,4 +1,5 @@
 ﻿using SMTP.Models;
+using SMTP.Settings;
 using System.Net;
 using System.Net.Mail;
 
@@ -10,24 +11,23 @@ namespace SMTP
     public class SetSettingSMTP
     {
         /// <summary>
-        ///     Собирает всю информацию для отправки на другой сервер
+        ///     Отправляет информацию на другой сервер
         /// </summary>
-        /// <param name="info">Вся информация для отправки на другой сервер</param>
-        public SetSettingSMTP(ModelInfo info)
+        public SetSettingSMTP()
         {
-            string[] str = info.Authorization.Login.Split('@');
-            SmtpClient Smtp = new SmtpClient("smtp." + str[1], 25);
-            Smtp.Credentials = new NetworkCredential(info.Authorization.Login, info.Authorization.Password);
-            Smtp.EnableSsl = info.Options.EnableSSL;
+            string[] domain = ModelMessage.From.Split('@');
+            string[] value = Domain.SettingsAllDomains[domain[1]];
+            SmtpClient Smtp = new SmtpClient("smtp." + domain[1], int.Parse(value[0]));
+            Smtp.Credentials = new NetworkCredential(value[1], value[2]);
+            Smtp.EnableSsl = true;
             MailMessage MessageSMTP = new MailMessage();
-            MessageSMTP.From = new MailAddress(info.Message.From);
-            foreach (var item in info.Message.To)
+            MessageSMTP.From = new MailAddress(ModelMessage.From);
+            foreach (var item in ModelMessage.To)
             {
                 MessageSMTP.To.Add(item);
             }
-            MessageSMTP.Subject = info.Message.Subject;
-            MessageSMTP.Body = info.Message.Body;
-            MessageSMTP.IsBodyHtml = info.Options.IsBodyHTML;
+            MessageSMTP.Subject = ModelMessage.Subject;
+            MessageSMTP.Body = ModelMessage.Body;
             Smtp.Send(MessageSMTP);
         }
     }
