@@ -8,13 +8,13 @@ namespace SMTP.Interfaces
     public interface ICommands
     {
         /// <summary>
-        ///     Команда HELO. Здаровается с сервером.
+        ///     Команда HELO. Здоровается с сервером.
         /// </summary>
         /// <returns>Ответ сервера</returns>
         string CommandHelo();
 
         /// <summary>
-        ///     Команда EHLO. Выводит раcширения.
+        ///     Команда EHLO. Выводит расширения.
         /// </summary>
         /// <returns>Ответ сервера</returns>
         string CommandEhlo();

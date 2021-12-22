@@ -11,7 +11,6 @@ namespace SMTP.Controllers
         /// <summary>
         ///     Создает письмо и записывает в файл.
         /// </summary>
-        /// <param name="info">Все параметры письма</param>
         public CreateMessagesController(string nickname)
         {
             StreamWriter fstream = new StreamWriter("Files/Accounts/" + nickname + ".txt", true);

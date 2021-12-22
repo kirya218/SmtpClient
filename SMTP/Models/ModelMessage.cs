@@ -8,7 +8,7 @@ namespace SMTP.Models
     public static class ModelMessage
     {
         /// <summary>
-        ///     Откуда будет послыно сообщение
+        ///     Откуда будет послано сообщение
         /// </summary>
         public static string From { get; set; }
 

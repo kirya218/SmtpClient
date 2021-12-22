@@ -126,7 +126,7 @@ namespace SMTP.Controllers
         private string CheckInfo()
         {
             CreateMessagesController createMessage;
-            if (ModelMessage.To != null)
+            if (ModelMessage.To.Count != 0)
             {
                 var a = new SetSettingSMTP();
             }

@@ -53,7 +53,7 @@ namespace SMTP
         }
 
         /// <summary>
-        ///     Начало разговора с сервреом
+        ///     Начинает разговор с сервером
         /// </summary>
         /// <param name="stream">поток данных</param>
         private void StartServerTalk(NetworkStream stream)

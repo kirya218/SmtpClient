@@ -11,7 +11,7 @@ namespace SMTP.Settings
         public static Dictionary<string, string[]> SettingsAllDomains = new Dictionary<string, string[]>();
 
         /// <summary>
-        ///     Собирает всю информацию о актуальных настройках домена.
+        ///     Собирает всю информацию об актуальных настройках домена.
         /// </summary>
         static Domain()
         {

@@ -32,7 +32,7 @@ namespace SMTP.Entities
             }
         }
 
-        /// <returns>Возращает всех пользователей списком</returns>
+        /// <returns>Возвращает всех пользователей списком</returns>
         public static List<string> GetUsers() => AllUsers;
     }
 }
