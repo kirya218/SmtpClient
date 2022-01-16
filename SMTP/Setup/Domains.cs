@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace SMTP.Settings
+namespace SMTP.Setup
 {
     public static class Domain
     {

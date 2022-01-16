@@ -1,5 +1,5 @@
 ﻿using SMTP.Models;
-using SMTP.Settings;
+using SMTP.Setup;
 using System.Net;
 using System.Net.Mail;
 

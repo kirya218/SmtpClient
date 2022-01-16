@@ -1,8 +1,10 @@
 ﻿using SMTP.Entities;
 using SMTP.Interfaces;
 using SMTP.Models;
+using SMTP.Setup;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -29,42 +31,30 @@ namespace SMTP.Controllers
 
         public string CommandHelo()
         {
-            if (!commands.Contains("HELO"))
-            {
-                commands.Add("HELO");
-                return "250 domain name should be qualified";
-            }
-            else return ErrorString;
+            if (!commands.Contains("HELO")) commands.Add("HELO");
+            return "250 domain name should be qualified";
         }
 
         public string CommandEhlo()
         {
-            if (!commands.Contains("EHLO"))
-            {
-                commands.Add("EHLO");
-                return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250 LOGIN";
-            }
-            else return ErrorString;
+            if (!commands.Contains("EHLO")) commands.Add("EHLO");
+            return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250 LOGIN";
         }
 
         public string CommandMailFrom(string messageClient)
         {
-            if (!commands.Contains("MAIL FROM"))
-            {
-                commands.Add("MAIL FROM");
-                return CheckMail(messageClient);
-            }
-            else return ErrorString;
+            if (!commands.Contains("MAIL FROM")) commands.Add("MAIL FROM");
+            return CheckMail(messageClient);
         }
 
         public string CommandRcptTo(string messageClient)
         {
-            commands.Add("RCPT TO");
+            if (!commands.Contains("RCPT TO")) commands.Add("RCPT TO");
             string[] email = GetClearEmail(messageClient).Split('@');
             List<string> nicks = Users.GetUsers();
-            if (Settings.Settings.Relay == false)
+            if (Settings.Relay == false)
             {
-                if (email[1] == Settings.Settings.Domain)
+                if (email[1] == Settings.Domain)
                 {
                     if (!nicks.Contains(email[0])) return "550 No such user here";
                     else
@@ -77,7 +67,7 @@ namespace SMTP.Controllers
             }
             else
             {
-                if (email[1] == Settings.Settings.Domain)
+                if (email[1] == Settings.Domain)
                 {
                     if (nicks.Contains(email[0]))
                     {
@@ -145,6 +135,20 @@ namespace SMTP.Controllers
         private string CheckMail(string clientMessage)
         {
             string email = GetClearEmail(clientMessage);
+
+            string domain = email.Split('@')[1];
+
+            try
+            {
+                IPHostEntry hostInfo = Dns.GetHostEntry(domain);
+                if (hostInfo.AddressList.Length == 0) 
+                    return "550 no IP addresses with this domain were found";
+            }
+            catch
+            {
+                return "550 no such domain was found";
+            }
+
             if (email == string.Empty) return "354 Start typing mail '<', finish with '>'";
             else if (Regex.IsMatch(@"^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$", email))
                 return "Incorrectly entered email";

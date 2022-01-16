@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SMTP", "SMTP\SMTP.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{18CB0850-1853-4BB6-AE19-739231C248B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSmtpProject", "TestSmtpProject\TestSmtpProject.csproj", "{9D220911-30C2-49B1-ABAE-D76AEDD00892}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{18CB0850-1853-4BB6-AE19-739231C248B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18CB0850-1853-4BB6-AE19-739231C248B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18CB0850-1853-4BB6-AE19-739231C248B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D220911-30C2-49B1-ABAE-D76AEDD00892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D220911-30C2-49B1-ABAE-D76AEDD00892}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D220911-30C2-49B1-ABAE-D76AEDD00892}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D220911-30C2-49B1-ABAE-D76AEDD00892}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

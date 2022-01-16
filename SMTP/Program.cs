@@ -1,5 +1,5 @@
-﻿using System;
-using SMTP.Settings;
+﻿using SMTP.Setup;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,9 +13,9 @@ namespace SMTP
         { 
             try
             {
-                listener = new TcpListener(IPAddress.Parse(Settings.Settings.Host), int.Parse(Settings.Settings.Port));
+                listener = new TcpListener(IPAddress.Parse(Settings.Host), int.Parse(Settings.Port));
                 listener.Start();
-                Console.WriteLine("Server IP: " + Settings.Settings.Host + " Server PORT: " + Settings.Settings.Port);
+                Console.WriteLine("Server IP: " + Settings.Host + " Server PORT: " + Settings.Port);
                 Console.WriteLine("S: Waiting for connection...");
 
                 while (true)
