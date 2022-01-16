@@ -13,11 +13,11 @@ namespace SMTP
         /// <summary>
         ///     Отправляет информацию на другой сервер
         /// </summary>
-        public SetSettingSMTP()
+        public SetSettingSMTP(IPHostEntry hostInfo)
         {
-            string[] domain = ModelMessage.From.Split('@');
-            string[] value = Domain.SettingsAllDomains[domain[1]];
-            SmtpClient Smtp = new SmtpClient("smtp." + domain[1], int.Parse(value[0]));
+            string host = hostInfo.HostName;
+            string[] value = Domain.SettingsAllDomains[host];
+            SmtpClient Smtp = new SmtpClient(host, int.Parse(value[0]));
             Smtp.Credentials = new NetworkCredential(value[1], value[2]);
             Smtp.EnableSsl = true;
             MailMessage MessageSMTP = new MailMessage();

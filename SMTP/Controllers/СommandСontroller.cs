@@ -20,6 +20,11 @@ namespace SMTP.Controllers
         private List<string> nicknameSend = new List<string>();
 
         /// <summary>
+        ///     Хост, IP(может > 1) domain.
+        /// </summary>
+        private IPHostEntry HostInfo { get; set; }
+
+        /// <summary>
         ///     Ответ сервера, если пользователь уже вводил данную комнду или повторяет её.
         /// </summary>
         private const string ErrorString = "You have already entered this command";
@@ -118,7 +123,7 @@ namespace SMTP.Controllers
             CreateMessagesController createMessage;
             if (ModelMessage.To.Count != 0)
             {
-                var a = new SetSettingSMTP();
+                var a = new SetSettingSMTP(HostInfo);
             }
 
             if (nicknameSend.Count != 0)
@@ -136,12 +141,12 @@ namespace SMTP.Controllers
         {
             string email = GetClearEmail(clientMessage);
 
-            string domain = email.Split('@')[1];
+            string MX = "smtp." + email.Split('@')[1];
 
             try
             {
-                IPHostEntry hostInfo = Dns.GetHostEntry(domain);
-                if (hostInfo.AddressList.Length == 0) 
+                HostInfo = Dns.GetHostEntry(MX);
+                if (HostInfo.AddressList.Length == 0)
                     return "550 no IP addresses with this domain were found";
             }
             catch
