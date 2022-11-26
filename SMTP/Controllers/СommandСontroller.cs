@@ -1,218 +1,158 @@
 ﻿using SMTP.Entities;
 using SMTP.Interfaces;
-using SMTP.Models;
-using SMTP.Setup;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 
 namespace SMTP.Controllers
 {
-    /// <summary>
-    ///     Контролер для выполнения команд
-    /// </summary>
     public class СommandСontroller : ICommands
     {
-        private Users users = new Users();
-        private List<string> nicknameSend = new List<string>();
+        private readonly IUserController _userController;
+        private readonly ISettingController _settingController;
+        private readonly IDomainController _domainController;
 
-        /// <summary>
-        ///     Хост, IP(может > 1) domain.
-        /// </summary>
-        private IPHostEntry HostInfo { get; set; }
+        private readonly Message _message;
 
-        /// <summary>
-        ///     Ответ сервера, если пользователь уже вводил данную комнду или повторяет её.
-        /// </summary>
-        private const string ErrorString = "You have already entered this command";
-
-        /// <summary>
-        ///     Список для всех команд, которые пользователь уже ввел.
-        /// </summary>
-        private List<string> commands = new List<string>();
-
-        public string CommandHelo()
+        public СommandСontroller(IUserController userController, ISettingController settingController, IDomainController domainController)
         {
-            if (!commands.Contains("HELO")) commands.Add("HELO");
-            return "250 domain name should be qualified";
+            _userController = userController;
+            _settingController = settingController;
+            _domainController = domainController;
+            _message = new Message();
         }
 
-        public string CommandEhlo()
-        {
-            if (!commands.Contains("EHLO")) commands.Add("EHLO");
-            return "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250 LOGIN";
-        }
+        public string CommandHelo() => "250 domain name should be qualified";
+
+        public string CommandEhlo() => "250-8BITMIME\r\n250-SIZE\r\n250-STARTSSL\r\n250 LOGIN";
 
         public string CommandMailFrom(string messageClient)
         {
-            if (!commands.Contains("MAIL FROM")) commands.Add("MAIL FROM");
-            return CheckMail(messageClient);
+            var email = GetClearEmail(messageClient);
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return "354 Start typing mail '<', finish with '>'";
+            }
+
+            _message.From = email;
+            return "250 ok";
         }
 
         public string CommandRcptTo(string messageClient)
         {
-            if (!commands.Contains("RCPT TO")) commands.Add("RCPT TO");
-            string[] email = GetClearEmail(messageClient).Split('@');
-            List<string> nicks = Users.GetUsers();
-            if (Settings.Relay == false)
+            var email = GetClearEmail(messageClient);
+
+            if (string.IsNullOrWhiteSpace(email))
             {
-                if (email[1] == Settings.Domain)
-                {
-                    if (!nicks.Contains(email[0])) return "550 No such user here";
-                    else
-                    {
-                        nicknameSend.Add(email[0]);
-                        return "250 ok";
-                    }
-                }
-                else return "This server accepts only emails with its own domain";
+                return "354 Start typing mail '<', finish with '>'";
             }
-            else
+
+            var userName = email.Split("@").First();
+            var emailDomain = email.Split("@").Last();
+
+            var nicks = _userController.GetUsers();
+            var settings = _settingController.GetSettings();
+            var domain = _domainController.GetDomains().FirstOrDefault(x => x.Dom == emailDomain);
+
+            if (domain == null || (settings.Relay == false && domain.Dom != settings.Domain))
             {
-                if (email[1] == Settings.Domain)
-                {
-                    if (nicks.Contains(email[0]))
-                    {
-                        nicknameSend.Add(email[0]);
-                        return "250 ok";
-                    }
-                    else return "550 No such user here";
-                }
-                else return CheckMail(messageClient);
+                return "This server accepts only emails with its own domain";
             }
+
+            if (settings.Relay == false || (settings.Relay == true && domain.Dom == settings.Domain))
+            {
+                var user = nicks.FirstOrDefault(x => x.UserName == userName);
+
+                if (user == null)
+                {
+                    return "550 No such user here";
+                }
+            }
+
+            return "250 ok";
         }
 
-        public string CommandData(NetworkStream stream)
+        public string CommandData(string clientMessage)
         {
-            if (commands.Contains("MAIL FROM") && commands.Contains("RCPT TO"))
+            if (string.IsNullOrWhiteSpace(clientMessage))
             {
-                if (!commands.Contains("DATA")) commands.Add("DATA");
+                return "Error, string empty";
+            }
 
-                string message;
-                do
+            foreach (var part in clientMessage.Split("\r\n"))
+            {
+                if (part.Trim().Contains(':') == false)
                 {
-                    StringBuilder builder = new StringBuilder();
-                    byte[] data = new byte[1024];
-                    int bytes = stream.Read(data, 0, data.Length);
-                    message = builder.Append(Encoding.UTF8.GetString(data, 0, bytes)).ToString();
-                    Console.WriteLine(message);
-                    if (message.Replace("\r\n", string.Empty) != ".")
-                    {
-                        if (message != string.Empty)
-                        {
-                            ModelMessage.FullMessage += message;
-                            MessageToServer(message);
-                        }
-                    }
-                    else break;
+                    _message.Body += part;
+                    continue;
                 }
-                while (message != ".");
-                return CheckInfo();
+
+                var component = part.Split(':');
+
+                if (component.First() == "Subject")
+                {
+                    _message.Subject = component[1];
+                    continue;
+                }
             }
-            else return "First enter 'MAIL FROM' and 'RCPT TO'";
+
+            return TrySendMessage();
         }
 
-        /// <summary>
-        ///     Проверяет наличие всех обезательных полей для отправления сообщения на другой сервер
-        /// </summary>
-        private string CheckInfo()
+        private string TrySendMessage()
         {
-            CreateMessagesController createMessage;
-            if (ModelMessage.To.Count != 0)
+            if (_message.To.Count == 0 ||
+                _message.Body.Length == 0 ||
+                _message.Subject.Length == 0 ||
+                _message.From.Length == 0)
             {
-                var a = new SetSettingSMTP(HostInfo);
+                return "Error, required fields are not filled in";
             }
 
-            if (nicknameSend.Count != 0)
-                foreach (var item in nicknameSend)
-                    createMessage = new CreateMessagesController(item);
-            return "250 OK";
-        }
+            var domain = _domainController.GetDomains()
+                .FirstOrDefault(x => x.Dom == _message.From.Split('@')[1]);
 
-        /// <summary>
-        ///     Проверяет email
-        /// </summary>
-        /// <param name="email">email</param>
-        /// <returns>Возращает текстовый ответ(ошибка или все прошло успешно)</returns>
-        private string CheckMail(string clientMessage)
-        {
-            string email = GetClearEmail(clientMessage);
-
-            string MX = "smtp." + email.Split('@')[1];
+            if (domain == null)
+            {
+                return "Error!";
+            }
 
             try
             {
-                HostInfo = Dns.GetHostEntry(MX);
-                if (HostInfo.AddressList.Length == 0)
-                    return "550 no IP addresses with this domain were found";
-            }
-            catch
-            {
-                return "550 no such domain was found";
-            }
+                var smtp = new SmtpClient(domain.Dom, domain.Port)
+                {
+                    Credentials = new NetworkCredential(domain.Login, domain.Password),
+                    EnableSsl = true
+                };
 
-            if (email == string.Empty) return "354 Start typing mail '<', finish with '>'";
-            else if (Regex.IsMatch(@"^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$", email))
-                return "Incorrectly entered email";
-            else
-            {
-                if (clientMessage.StartsWith("MAIL FROM")) ModelMessage.From = email;
-                else if (clientMessage.StartsWith("RCPT TO")) ModelMessage.To.Add(email);
+                var messageSMTP = new MailMessage
+                {
+                    From = new MailAddress(_message.From)
+                };
+
+                foreach (var item in _message.To)
+                {
+                    messageSMTP.To.Add(item);
+                }
+
+                messageSMTP.Subject = _message.Subject;
+                messageSMTP.Body = _message.Body;
+                smtp.Send(messageSMTP);
                 return "250 ok";
             }
-        }
-
-        /// <summary>
-        ///     Создает сообщение для сервера.
-        /// </summary>
-        /// <param name="clientMessage">сообщение клиента</param>
-        private void MessageToServer(string clientMessage)
-        {
-            string[] message = clientMessage.Split("\r\n");
-            for (int i = 0; i < message.Length; i++)
+            catch (Exception ex)
             {
-                if (message[i].Contains("Subject"))
-                {
-                    string[] k = message[i].Split(':');
-                    ModelMessage.Subject = k[1];
-                }
-                else if (message[i] == "")
-                {
-                    for (int j = i + 1; j < message.Length; j++)
-                    {
-                        ModelMessage.Body += message[j];
-                    }
-                    break;
-                }
+                return ex.Message;
             }
         }
 
-        /// <summary>
-        ///     Очищает сообщения пользователя(email) от всех знаков кроме самой почты.
-        /// </summary>
-        /// <param name="message">Сообщение пользователя</param>
-        /// <returns>Чистый email</returns>
-        private static string GetClearEmail(string message)
+        private string GetClearEmail(string message)
         {
-            string email = string.Empty;
-            bool fg = false;
-            foreach (var item in message)
-            {
-                if (item == '<')
-                    fg = true;
-                if (fg == true)
-                {
-                    if (item != '<' && item != '>')
-                    {
-                        email += item;
-                    }
-                    else if (item == '>') break;
-                }
-            }
-            return email;
+            var ragex = new Regex(@"\w*<(.*?)>");
+            return ragex.Match(message).Groups[1].Value;
         }
     }
 }

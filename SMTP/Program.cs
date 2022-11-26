@@ -1,4 +1,4 @@
-﻿using SMTP.Setup;
+﻿using SMTP.Controllers;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -13,18 +13,21 @@ namespace SMTP
         { 
             try
             {
-                listener = new TcpListener(IPAddress.Parse(Settings.Host), int.Parse(Settings.Port));
+                var settings = new SettingController();
+                var setting = settings.GetSettings();
+                listener = new TcpListener(IPAddress.Parse(setting.Host), setting.Port);
                 listener.Start();
-                Console.WriteLine("Server IP: " + Settings.Host + " Server PORT: " + Settings.Port);
+                Console.WriteLine("Server IP: " + setting.Host + " Server PORT: " + setting.Port);
                 Console.WriteLine("S: Waiting for connection...");
 
                 while (true)
                 {
-                    TcpClient client = listener.AcceptTcpClient();
-                    ClientObject clientObject = new ClientObject(client);
+                    var client = listener.AcceptTcpClient();
+                    var clientObject = new ClientObject(client);
+
                     Console.WriteLine("S: The client connects to server...");
 
-                    Thread clientThread = new Thread(new ThreadStart(clientObject.Process));
+                    var clientThread = new Thread(new ThreadStart(clientObject.Process));
                     clientThread.Start();
                 }
             }
@@ -35,7 +38,9 @@ namespace SMTP
             finally
             {
                 if (listener != null)
+                {
                     listener.Stop();
+                }
             }
         }
     }

@@ -21,7 +21,7 @@ namespace Client
                 while (true)
                 {
                     byte[] data = new byte[1024];
-                    StringBuilder builder = new StringBuilder();
+                    var builder = new StringBuilder();
                     int bytes = 0;
                     do
                     {

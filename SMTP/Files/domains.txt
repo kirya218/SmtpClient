@@ -1,4 +1,0 @@
-domain:smtp.mail.ru
-port:25
-login:boss.niga03@mail.ru
-password:
